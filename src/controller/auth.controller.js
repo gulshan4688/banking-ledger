@@ -16,7 +16,7 @@ async function userRegisterController(req, res) {
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "9d" });
     res.cookie("token", token);
-    res.status(200).json({
+    res.status(201).json({
         message: "User Registered Successfully",
         user: user,
         token
@@ -24,4 +24,17 @@ async function userRegisterController(req, res) {
 
 }
 
-export default userRegisterController;
+async function userloginController(req, res) {
+    const {email, password} = req.body;
+    const user = await userModel.findOne({email}).select("password");
+    if(!user) res.status(401).json({message : "user does not exists"});
+    const isInvalidPassword = user.comparePassword(password);
+    if(!isInvalidPassword) res.status(401).json({ message : "Invalid password or email"});
+    
+    const token = jwt.sign({user : user._id},process.env.JWT_SECRET,{expiresIn : "9d"})
+    res.cookie("token", token);
+    res.status(200).json({ message : "user logged in successfully" , user })
+}
+
+
+export { userRegisterController, userloginController };
