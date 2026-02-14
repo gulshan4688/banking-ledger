@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import userModel from "../models/user.model.js";
 import dotenv from "dotenv";
+import sendRegistrationEmail  from "../services/email.service.js" ;
 
 dotenv.config()
 
@@ -8,7 +9,7 @@ async function userRegisterController(req, res) {
     const { name, email, password } = req.body;
     const emailAlreadyExists = await userModel.findOne({
         email
-    })
+    })  
     if (emailAlreadyExists) return res.status(409).json({ message: "Email already Exists" });
 
 
@@ -21,6 +22,11 @@ async function userRegisterController(req, res) {
         user: user,
         token
     })
+
+   await sendRegistrationEmail({
+    username: name,
+    email: email
+});
 
 }
 
