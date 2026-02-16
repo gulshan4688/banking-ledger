@@ -25,6 +25,12 @@ const userSchema = new mongoose.Schema({
         // const user = userModel.findOne({ email }).select("+password")
 
     },
+    systemUser : {
+        type : Boolean,
+        default : false, 
+        immutable : false, 
+        select : false
+    }
 
 },{
     timestamps : true

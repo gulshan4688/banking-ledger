@@ -43,7 +43,7 @@ const sendEmail = async (to, subject, text, html) => {
     }
 };
 
-async function sendRegistrationEmail({username, email}) {
+async function sendRegistrationEmail({ username, email }) {
     const subject = 'Welcome to Backend Ledger!';
     const text = `Hello ${username},\n\nThank you for registering at Backend Ledger. We're excited to have you on board!\n\nBest regards,\nThe Backend Ledger Team`;
     const html = `<p>Hello ${username},</p><p>Thank you for registering at Backend Ledger. We're excited to have you on board!</p><p>Best regards,<br>The Backend Ledger Team</p>`;
@@ -51,4 +51,72 @@ async function sendRegistrationEmail({username, email}) {
     await sendEmail(email, subject, text, html);
 }
 
-export default sendRegistrationEmail;
+async function sendTransactionEmail({ userEmail, name, amount, toAccount }) {
+    const subject = 'Transaction Alert - Backend Ledger';
+
+    const text = `Hello ${name},
+
+A transaction has been successfully processed from your account.
+
+Amount: ₹${amount}
+Transferred To: ${toAccount}
+
+If you did not authorize this transaction, please contact support immediately.
+
+Best regards,
+The Backend Ledger Team`;
+    const html = `
+        <p>Hello ${name},</p>
+
+        <p>A transaction has been <strong>successfully processed</strong> from your account.</p>
+
+        <ul>
+            <li><strong>Amount:</strong> ₹${amount}</li>
+            <li><strong>Transferred To:</strong> ${toAccount}</li>
+        </ul>
+
+        <p>If you did not authorize this transaction, please contact support immediately.</p>
+
+        <p>Best regards,<br>The Backend Ledger Team</p>`;
+
+    await sendEmail(userEmail, subject, text, html);
+}
+
+async function sendFailedTransactionEmail({ userEmail, name, amount, toAccount, reason }) {
+
+    const subject = '⚠️ Transaction Failed - Backend Ledger';
+
+    const text = `Hello ${name},
+
+We were unable to process your recent transaction.
+
+Amount: ₹${amount}
+Attempted To: ${toAccount}
+Reason: ${reason}
+
+No money has been deducted from your account.
+
+You may retry the transaction. If the issue persists, please contact support.
+
+Best regards,  
+The Backend Ledger Team`;
+    const html = `
+        <p>Hello ${name},</p>
+
+        <p style="color:red;"><strong>Your transaction could not be completed.</strong></p>
+
+        <ul>
+            <li><strong>Amount:</strong> ₹${amount}</li>
+            <li><strong>Attempted To:</strong> ${toAccount}</li>
+            <li><strong>Reason:</strong> ${reason}</li>
+        </ul>
+
+        <p><strong>No money has been deducted.</strong></p>
+
+        <p>You may retry the transaction. If the issue persists, please contact support.</p>
+
+        <p>Best regards,<br>The Backend Ledger Team</p>`;
+    await sendEmail(userEmail, subject, text, html);
+}
+
+export default { sendRegistrationEmail, sendTransactionEmail, sendFailedTransactionEmail };

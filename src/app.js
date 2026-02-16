@@ -9,10 +9,12 @@ app.use(express.json());
 // Routes required 
 import authRouter from './routes/auth.routes.js'
 import accountRouter from './routes/account.routes.js'
+import transactionRoutes from './routes/transaction.routes.js'
 
 
 // routes used
 app.use("/api/auth", authRouter);
 app.use("/api/accounts", accountRouter);
+app.use("/api/transactions", transactionRoutes);
 
 export default app 

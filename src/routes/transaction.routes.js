@@ -1,10 +1,9 @@
 import express from "express";
-import authMiddleware from '../middleware/auth.middleware.js';
-import createTransaction from "../controller/transaction.controller.js";
-
+import {authSystemUserMiddleware} from '../middleware/auth.middleware.js'
+import transactionController from "../controller/transaction.controller.js";
 const transactionRoutes = express.Router();
 
-transactionRoutes.post("/", authMiddleware, createTransaction);
+transactionRoutes.post("/", authSystemUserMiddleware  , transactionController.createTransaction);
 
 
 export default transactionRoutes; 
