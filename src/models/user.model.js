@@ -21,6 +21,8 @@ const userSchema = new mongoose.Schema({
         required : [true, "password is required."],
         minLength : [8, "Your password should contain atleast 8 characters."],
         select : false
+        // by writing this select : false whenever we demand for the user data password will not come in that response we have to expilicitly write it as
+        // const user = userModel.findOne({ email }).select("+password")
 
     },
 
