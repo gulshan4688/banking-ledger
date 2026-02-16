@@ -7,12 +7,10 @@ dotenv.config()
 
 async function userRegisterController(req, res) {
     const { name, email, password } = req.body;
-    const emailAlreadyExists = await userModel.findOne({
-        email
-    })  
+    
+    const emailAlreadyExists = await userModel.findOne({ email })  
     if (emailAlreadyExists) return res.status(409).json({ message: "Email already Exists" });
-
-
+    
     const user = await userModel.create({ name, email, password });
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "9d" });
