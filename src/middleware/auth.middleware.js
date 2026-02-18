@@ -33,11 +33,11 @@ export async function authMiddleware(req, res, next) {
 
 export async function authSystemUserMiddleware(req, res, next) {
     const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
-    if (!token) return res.status(401).json({ message: "Unauthorized , token not found" })
-
+    if (!token) return res.status(401).json({ message: "Unauthorized , token not found" });
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await userModel.findById(decoded.userId).select("+systemUser");
+        const user = await userModel.findById(decoded.user).select("+systemUser");
+        if (!user) return res.status(404).json({ message: "Sytem User not found [auth error]" });
         if (!user.systemUser) return res.status(403).json({ message: "Not a system User" });
         req.user = user;
         return next();
@@ -46,5 +46,5 @@ export async function authSystemUserMiddleware(req, res, next) {
     }
 }
 
-// export default { authMiddleware, authSystemUserMiddleware };
+export default { authMiddleware, authSystemUserMiddleware };
 

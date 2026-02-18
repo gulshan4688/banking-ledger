@@ -1,9 +1,10 @@
 import accountModel from '../models/account.model.js'
 import transactionModel from '../models/transaction.model.js'
 import getBalance from "../models/account.model.js"
-import mongoose from 'mongoose';
+import mongoose, { modelNames } from 'mongoose';
 import ledgerModel from '../models/ledger.model.js';
 import sendTransactionEmail from '../services/email.service.js'
+import userModel from '../models/user.model.js';
 
 async function createTransaction(req, res) {
     const { fromAccount, toAccount, amount, idempotencyKey } = req.body;
@@ -106,20 +107,67 @@ async function createTransaction(req, res) {
 }
 
 async function createInitialFundTransfer(req, res) {
-    const { fromAccount, toAccount, idempotencyKey } = req.body;
-    if (!fromAccount || !toAccount || !idempotencyKey) {
-        return res.status(401).json({ message: "toAccount, fromAccount and idempotencyKey are required" });
+    // what do we have 
+    const { toAccount, amount, idempotencyKey } = req.body;
+    if (!toAccount || !amount || !idempotencyKey) {
+        return res.status(401).json({ message: "amount, toAccount and idempotencyKey are required" });
     }
-    const existanceOfToAccount = await accountModel.findOne({ _id: toAccount })
-    if (!existanceOfToAccount) return res.status(401).json({ message: "Invalid Account" });
 
-    // we have a to account now we need to system user account 
+    const isRepeatedPayment = await transactionModel.findOne({ idempotencyKey: idempotencyKey });
+    if (isRepeatedPayment) return res.status(409).json({ message: "Idempotency Key already exists , repeated payment" })
+
+    const fromToAccount = await accountModel.findOne({ _id: toAccount })
+    if (!fromToAccount) return res.status(401).json({ message: "Invalid toAccount" });
+
+    // we have a toAccount now we need to system user account 
     const fromUserAccount = await accountModel.findOne({
-        systemUser: true,
         user: req.user._id
     })
+    console.log(req.user._id);
     if (!fromUserAccount) return res.status(409).json({ message: "system user account not found" });
-    
+
+    // finding credentials
+    const creditAccountDetails = await accountModel.findOne({ _id : toAccount }); // toAccount is id
+    // console.log(creditAccountDetails);
+    const userDetails = await userModel.findOne({ _id : creditAccountDetails.user });
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    const transaction = new transactionModel({
+        fromAccount: fromUserAccount._id,
+        toAccount,
+        amount,
+        idempotencyKey,
+        status: "PENDING"
+    },)
+
+    const debitLedgerEntry = await ledgerModel.create([{
+        account: fromUserAccount._id,
+        amount: amount,
+        transaction: transaction._id,
+        type: "DEBIT"
+    }], { session })
+
+    const creditLedgerEntry = await ledgerModel.create([{
+        account: toAccount,
+        amount: amount,
+        transaction: transaction._id,
+        type: "CREDIT"
+    }], { session })
+
+    transaction.status = "COMPLETED";
+    await transaction.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json({
+        message: "Initial funds transaction completed successfully",
+        transaction: transaction,
+        // Debited_from : `${modelNames}`,
+        credited_to: `${userDetails.name}`
+    })
 }
 
-export default { createTransaction, getBalance };
+export default { createTransaction, getBalance, createInitialFundTransfer };
