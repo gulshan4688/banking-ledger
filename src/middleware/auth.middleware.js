@@ -13,15 +13,16 @@ export async function authMiddleware(req, res, next) {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET); // it returns the user id , iat and exp[expiry]
         // console.log(decoded);
-        const user = await userModel.findById(decoded.user);
+        const user = await userModel.findById(decoded.user_id);
         if (!user) {
             return res.status(401).json({
                 message: "User not found. Token invalid."
             });
         }
-        req.user = user;
+        req.user_auth = user;
+        // console.log(user);
         next();
 
     } catch (error) {
