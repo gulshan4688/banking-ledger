@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import userModel from "../models/user.model.js";
 import dotenv from "dotenv";
 import sendRegistrationEmail from "../services/email.service.js";
+import tokenBlackListModel from "../models/blackList.model.js";
 
 dotenv.config()
 
@@ -49,5 +50,18 @@ async function userloginController(req, res) {
     res.status(200).json({ message: `${username} logged in successfully`, user })
 }
 
+async function userLogoutController(req, res) {
+    const token = req.cookies.token || req.headers.authorizations?.split(" ")[1];
+    if (!token) return res.status(400).json({ message: "token not found" })
 
-export { userRegisterController, userloginController };
+    await tokenBlackListModel.create({
+        token: token
+    })
+    res.clearCookie("token");
+
+    res.status(200).json({
+        message: "User logged out Successfully"
+    })
+}
+
+export { userRegisterController, userloginController, userLogoutController };

@@ -1,4 +1,5 @@
 import accountModel from '../models/account.model.js';
+// import getBalance from '
 
 async function createAccountController(req, res) {
     const { account_num } = req.body;
@@ -18,9 +19,28 @@ async function createAccountController(req, res) {
     })
 }
 
-async function getAllAccounts(req, res) {
+async function getAllAccountsController(req, res) {
     const accounts = await accountModel.find({ user: req.user_auth._id });
     return res.status(200).json({ accounts });
-
 }
-export default { createAccountController, getAllAccounts };
+
+async function getAccountBalanceController(req, res) {
+    const { account_num } = req.body;
+    const account = await accountModel.findOne({
+        account_num,
+        user: req.user_auth._id
+    });
+    if (!account) return res.status(404).json({ message: `Account Num : ${account_num} not found , Create first` })
+        console.log(account);
+    const balance = await account.getBalance();
+    account.populate("user", "name email")
+    return res.status(201).json({
+        account,
+        message: `Account Balance: ${balance}`
+    })
+}
+export default {
+    createAccountController,
+    getAllAccountsController,
+    getAccountBalanceController
+};

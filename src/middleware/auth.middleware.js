@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
-import accountModel from "../models/account.model.js";
 import dotenv from "dotenv";
+import tokenBlackListModel from "../models/blackList.model.js";
 import userModel from "../models/user.model.js";
 
 dotenv.config();
@@ -11,6 +11,9 @@ export async function authMiddleware(req, res, next) {
     if (!token) {
         return res.status(401).json({ message: "Un-authorized acces , no token found" });
     }
+    const isBlackListed = await tokenBlackListModel.findOne({token});
+
+    if(isBlackListed) return res.status(409).json({ message : "Unauthorized access, token is blacklisted" });
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET); // it returns the user id , iat and exp[expiry]
@@ -35,9 +38,14 @@ export async function authMiddleware(req, res, next) {
 export async function authSystemUserMiddleware(req, res, next) {
     const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ message: "Unauthorized , token not found" });
+
+    const isBlackListed = await tokenBlackListModel.findOne({token});
+    if(isBlackListed) return res.status(409).json({ message : "Unauthorized access, token is blacklisted" });
+
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await userModel.findById(decoded.user).select("+systemUser");
+        const user = await userModel.findById(decoded.user_id).select("+systemUser");
+        console.log(user);
         if (!user) return res.status(404).json({ message: "Sytem User not found [auth error]" });
         if (!user.systemUser) return res.status(403).json({ message: "Not a system User" });
         req.user = user;
