@@ -11,7 +11,9 @@ import authRouter from './routes/auth.routes.js'
 import accountRouter from './routes/account.routes.js'
 import transactionRoutes from './routes/transaction.routes.js'
 
-
+app.get('/', (req, res) => {
+    res.send("Banking ledger is online and running");
+})
 // routes used
 app.use("/api/auth", authRouter);
 app.use("/api/accounts", accountRouter);
